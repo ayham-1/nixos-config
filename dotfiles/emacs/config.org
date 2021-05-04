@@ -1,0 +1,325 @@
+#+TITLE: EMACS Configuration.
+#+AUTHOR: Ayham Mamoun
+#+EMAIL: ayhamaboualfadl@gmail.com
+#+OPTIONS: toc:nil num:nil
+
+* Configure =use-package=
+
+Always compile the packages, and use the newest version available.
+
+#+BEGIN_SRC emacs-lisp
+  (require 'use-package-ensure)
+  (setq use-package-always-ensure t)
+#+END_SRC
+
+Workaround for a bug in EMACS 26. Where there is an issue installing some packages.
+
+#+BEGIN_SRC emacs-lisp
+  (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+#+END_SRC
+
+* Load Scripts
+
+Load the typing-speed script.
+
+#+BEGIN_SRC emacs-lisp
+  (load-file (concat user-emacs-directory "scripts/typing_speed.el"))
+#+END_SRC
+  
+* UI Prefrences
+** Tweak EMACS' window
+
+Disable menu, scrollbar and minibuffer scrollbar.
+
+#+BEGIN_SRC emacs-lisp
+  (tool-bar-mode -1)
+  (menu-bar-mode -1)
+  (scroll-bar-mode -1)
+  (set-window-scroll-bars (minibuffer-window) nil nil)
+#+END_SRC
+
+Bind frame title to the name of the current project.
+
+#+BEGIN_SRC emacs-lisp
+(setq frame-title-format '((:eval (projectile-project-name))))
+#+END_SRC
+
+** Load theme
+
+Use 'monokai' theme.
+
+#+BEGIN_SRC emacs-lisp
+  (defun apply-theme ()
+	"Make frames just slightly transparent."
+	(interactive)
+  (load-theme 'monokai t))
+
+  (use-package monokai-theme
+	:config
+	(apply-theme))
+  (setq ;; foreground and background
+		monokai-foreground     "#ABB2BF"
+		monokai-background     "#282C34"
+		;; highlights and comments
+		monokai-comments       "#F8F8F0"
+		monokai-emphasis       "#282C34"
+		monokai-highlight      "#FFB269"
+		monokai-highlight-alt  "#1B1D1E"
+		monokai-highlight-line "#1B1D1E"
+		monokai-line-number    "#F8F8F0"
+		;; colours
+		monokai-blue           "#61AFEF"
+		monokai-cyan           "#56B6C2"
+		monokai-green          "#98C379"
+		monokai-gray           "#3E4451"
+		monokai-violet         "#C678DD"
+		monokai-red            "#E06C75"
+		monokai-orange         "#D19A66"
+		monokai-yellow         "#E5C07B")
+  (setq monokai-height-minus-1 0.8
+		monokai-height-plus-1 1.1
+		monokai-height-plus-2 1.15
+		monokai-height-plus-3 1.2
+		monokai-height-plus-4 1.3)
+#+END_SRC
+
+** Configure packages that modify the look
+*** =powerline=
+
+Install and use EMACS' =powerline=
+
+#+BEGIN_SRC emacs-lisp
+(use-package powerline)
+(powerline-default-theme)
+#+END_SRC
+
+** Environment specific configuration
+*** =ORG-mode= Environment
+
+Replace =ORG-mode= ellipsis with a downward arrow.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-ellipsis "↲")
+#+END_SRC
+
+* Basic Configuration
+
+Increase the garbage collector threshold, to speed up some operations.
+
+#+BEGIN_SRC emacs-lisp
+  (setq gc-cons-threshold 20000000)
+#+END_SRC
+
+Treat CamelCaseSubWords as seperate words. 
+Note: Check if this suits me.
+
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'prog-mode-hook 'subword-mode)
+#+END_SRC
+
+If a file starts with #!, make it executable.
+
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'after-save-hook 'executable-make-buffer-file-executable-if-script-p)
+#+END_SRC
+
+If saving a file in a directory doesn't exist, offer to create the parent directories recursively.
+
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'before-save-hook
+			(lambda ()
+			  (when buffer-file-name
+				(let ((dir (file-name-directory buffer-file-name)))
+				  (when (and (not (file-exists-p dir)) y-or-n-p (format "Directory %s does not exist, Create it?" dir))
+					(make-directory dir t ))))))
+#+END_SRC
+
+Require having a new line.
+
+#+BEGIN_SRC emacs-lisp
+  (setq require-final-newline t)
+#+END_SRC
+
+Make file sizes human-readable to dired buffers.
+
+#+BEGIN_SRC emacs-lisp
+  (setq-default dired-listing-switches "-alh")
+#+END_SRC
+
+Refresh buffer when the file is changed, stoping buffers and file getting out of sync.
+
+#+BEGIN_SRC emacs-lisp
+(global-auto-revert-mode t)
+#+END_SRC
+
+When pressing the middle mouse button, paste where the curser is rather than where the mouse is.
+
+#+BEGIN_SRC emacs-lisp
+(setq mouse-yank-at-point 1)
+#+END_SRC
+
+Better increase and decrease text scale.
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key  (kbd "C-+") 'text-scale-increase)
+(global-set-key (kbd "C--") 'text-scale-decrease)
+#+END_SRC
+
+Enable visual parantheses matching.
+
+#+BEGIN_SRC emacs-lisp
+(show-paren-mode 1)
+#+END_SRC
+
+Enable Line numberings.
+
+#+BEGIN_SRC emacs-lisp
+(global-display-line-numbers-mode)
+#+END_SRC
+
+Store backups and temperory files in =temporary-file-directory=.
+=/tmp= on Unix. Warning: =/tmp= on most Unix-like systems is VOLATILE, IN-MEMORY storage.
+
+#+BEGIN_SRC emacs-lisp
+(setq backup-directory-alist `((".*" . ,temporary-file-directory)))
+(setq auto-save-file-name-transforms `((".*", temporary-file-directory t)))
+#+END_SRC
+
+* Packages Configuration
+** =ag=
+
+Set up =ag= on startup.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package ag)
+#+END_SRC
+
+** =company=
+
+Enable =company-mode= everywhere.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package company)
+  (add-hook 'after-init-hook 'global-company-mode)
+#+END_SRC
+
+Use =M-/= for completion.
+
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "M-/") 'company-complete-common)
+#+END_SRC
+
+** =flycheck=
+
+Install flycheck.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package flycheck)
+#+END_SRC
+
+** =magit=
+
+Use magit for git repos managment.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package magit
+	:bind ("C-x g" . magit-status))
+#+END_SRC
+
+** =projectile=
+
+Use projectile for useful funcationality for project management.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package projectile)
+#+END_SRC
+
+** =undo-tree=
+
+Use =undo-tree=.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package undo-tree)
+#+END_SRC
+
+** Environment Specific Packages.
+*** =Lisp= Environment
+
+Use =paredit=.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package paredit)
+#+END_SRC
+
+Use =rainbow-delimiters=.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package rainbow-delimiters)
+#+END_SRC
+
+* Programming Environments Configuration
+
+Use 4-spaced characters for tabs by default.
+
+#+BEGIN_SRC emacs-lisp
+  (setq-default tab-width 4)
+#+END_SRC
+
+Use subword mode.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package subword
+	:config (global-subword-mode 1))
+#+END_SRC
+
+** =C/C++= Environment
+
+Set the tab width when using C/C++ mode.
+
+#+BEGIN_SRC emacs-lisp
+  (setq-default c-basic-offset 4)
+#+END_SRC
+
+** =Lisp= Environment
+
+Uses lisp packages when lisp languages are enabled.
+
+#+BEGIN_SRC emacs-lisp
+  (setq lispy-mode-hooks
+		'(emacs-lisp-hook lisp-mode-hook))
+
+  (dolist (hook lispy-mode-hooks)
+	(add-hook hook (lambda()
+					 (setq show-paren-style 'expression)
+  (paredit-mode)
+  (rainbow-delimeters-mode))))
+#+END_SRC
+
+Set tab with
+
+** =ORG-mode= Environment
+This might not be a programming environment, but making a seperate section is an overkill.
+
+Enable indentation in =org= source blocks.
+
+#+BEGIN_SRC emacs-lisp
+  (setq org-src-tab-acts-natively t)
+#+END_SRC
+
+** =sh= Environment
+
+Indent with 4 spaces.
+
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'sh-mode-hook
+			(lambda ()
+			  (setq sh-basic-offset 4
+					sh-indentation 4)))
+#+END_SRC
+* Misc Configuration
+
+Install =speed-type= for typing practice.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package speed-type)
+#+END_SRC
