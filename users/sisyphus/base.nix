@@ -15,40 +15,64 @@
 	home-manager.useUserPackages = true;
 	home-manager.useGlobalPkgs = true;
 
+	# yea i live in the center of the world, absolutely
+	location.latitude = 0.0;
+	location.longitude = 0.0;
+
 	home-manager.users.sisyphus = { pkgs, ... }: {
-		programs = {
-			bash = {
-				enable = true;
-				historyControl = [ "ignoredups" "ignorespace" ];
-			};
+		programs.home-manager.enable = true;
 
-			ssh.enable = true;
+		# set up xdg variables
+		xdg.enable = true;
+		#xdg.configHome = "~/.config";
+		#xdg.dataHome = "~/.local/share";
+		#xdg.cacheHome = "~/.cache";
 
-			git.enable = true;
+		xdg.userDirs.enable = true;
+		xdg.userDirs.desktop = "\$HOME/desk";
+		xdg.userDirs.documents = "\$HOME/dox";
+		xdg.userDirs.download = "\$HOME/dl";
+		xdg.userDirs.extraConfig = { XDG_MISC_DIR = "\$HOME/misc"; };
+		xdg.userDirs.music = "\$HOME/muz";
+		xdg.userDirs.pictures = "\$HOME/pix";
+		xdg.userDirs.publicShare = "\$HOME/pub";
+		xdg.userDirs.templates = "\$HOME/templ";
+		xdg.userDirs.videos = "\$HOME/vidz";
+
+		programs.ssh.enable = true;
+		programs.git.enable = true;
+
+		# aliases
+		programs.bash.enable = true;
+		programs.bash.shellAliases = {
+			config = "git --git-dir=$HOME/.config/dotfiles
+				--work-tree=$HOME";
+			myip = "curl ipinfo.io/ip";
+			cp = "cp -iv";
+			rm = "rm -iv";
+			ll = "ls -lhA";
+			g = "g";
+			e = "$EDITOR";
+			v = "$VISUAL";
+			".." = "cd ..";
 		};
-	}
-
-	# set up xdg variables
-	xdg.enable = true;
-	xdg.configHome = "~/.config";
-	xdg.dataHome = "~/.local/share";
-	xdg.cacheHome = "~/.cache";
-
-	xdg.userDirs.enable = true;
-	xdg.userDirs.createDirectories = true;
-	xdg.userDirs.desktop = "\$HOME/desk";
-	xdg.userDirs.documents = "\$HOME/dox";
-	xdg.userDirs.download = "\$HOME/dl";
-	xdg.userDirs.extraConfig = "\$HOME/misc";
-	xdg.userDirs.music = "\$HOME/muz";
-	xdg.userDirs.pictures = "\$HOME/pix";
-	xdg.userDirs.publicShare = "\$HOME/pub";
-	xdg.userDirs.templates = "\$HOME/templ";
-	xdg.userDirs.videos = "\$HOME/vidz";
+		#programs.fish.enable = true;
+		programs.fish.shellAliases = {
+			config = "git --git-dir=$HOME/.config/dotfiles --work-tree=$HOME";
+			myip = "curl ipinfo.io/ip";
+			cp = "cp -iv";
+			rm = "rm -iv";
+			ll = "ls -lhA";
+			g = "g";
+			e = "$EDITOR";
+			v = "$VISUAL";
+			".." = "cd ..";
+		};
+	};
 
 	# ~/ clean-up & generic env vars
-	environment = let config_loc = "~/.config/" in {
-		variables.EDITOR="/usr/share/dotfiles";
+	environment = {
+		variables.DOTFILES_LOC ="/usr/share/dotfiles";
 		variables = {
 			EDITOR = "nvim";
 			VISUAL = "emacs";
@@ -56,39 +80,8 @@
 			BROWSER = "firefox";
 
 			LESSHISTFILE = "-";
-			WGETRC = config_loc + "wgetrc";
-			PASSWORD_STORE_DIR = config_loc + "pass";
-			GNUPGHOME = config_loc + "gnupg";
-
-			DOTFILES_LOC = "/usr/share/dotfiles/";
-		};
-	};
-
-	# aliases
-	home-manager.users.sisyphus = { pkgs, ... }: {
-		programs.bash.shellAliases = {
-			config = "git --git-dir=$HOME/.config/dotfiles
-			--work-tree=$HOME";
-			myip = "curl ipinfo.io/ip";
-			cp = "cp -iv";
-			rm = "rm -iv";
-			ll = "ls -lhA";
-			g = "g";
-			e = "$EDITOR";
-			v = "$VISUAL";
-			".." = "cd ..";
-		};
-		programs.fish.shellAliases = {
-			config = "git --git-dir=$HOME/.config/dotfiles
-			--work-tree=$HOME";
-			myip = "curl ipinfo.io/ip";
-			cp = "cp -iv";
-			rm = "rm -iv";
-			ll = "ls -lhA";
-			g = "g";
-			e = "$EDITOR";
-			v = "$VISUAL";
-			".." = "cd ..";
+			PASSWORD_STORE_DIR = "~/.config/pass";
+			#GNUPGHOME = "~/.config/gnupg";
 		};
 	};
 }

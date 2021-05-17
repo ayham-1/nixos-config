@@ -1,11 +1,11 @@
-{ config, pkgs, libs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
 	imports = [
-		"../services/grub.nix"
-		"../services/ntp.nix"
-		"../services/dns.nix"
-		"../services/localization.nix"
+		../services/grub.nix
+		../services/ntp.nix
+		../services/dns.nix
+		../services/localization.nix
 	];
 	
 	# mount tmpfs on /tmp
@@ -23,6 +23,7 @@
 		htop
 		iotop
 		iftop
+		killall
 		wget
 		curl
 		tcpdump
@@ -47,9 +48,13 @@
 		mkpasswd
 		jq
 		gitAndTools.gitFull
+		pass
+		macchanger
 	];
 
 	programs.bash.enableCompletion = true;
 
 	system.copySystemConfiguration = true;
+
+	nixpkgs.config.allowUnfree = true;
 }

@@ -1,10 +1,10 @@
-{ config= pkgs, lib, ... }:
+{ config, pkgs, lib, ... }:
 
 {
 	imports = [
-		"./common.nix"
-		"../services/fonts"
-		"../users/sisyphus/base.nix"
+		./common.nix
+		../services/fonts
+		../users/sisyphus/base.nix
 	];
 
 	# set up NUR
@@ -17,145 +17,132 @@
 
 	# enable boot splash
 	boot.plymouth.enable = true;
-
-	# setup sway
-	wayland.windowManager.sway.enable = true;
-	programs.sway = {
-		enable = true;
-		wrapperFeatures.gtk = true;
-		extraPackages = with pkgs; [
-			swaylock
-			swayidle
-			wl-clipboard
-			mako
-			alacritty
-			bemenu
-			wf-recorder
-			flashfocus
-			autotiling
-			waybar
-			kanshi
-			xwayland
-		];
-		extraOptions = [
-			"--my-next-gpu-wont-be-nvidia"
-		];
-		extraSessionCommands = ''
-			export SDL_VIDEODRIVER=wayland
-			# needs qt5.qtwayland in systemPackages
-			export QT_QPA_PLATFORM=wayland
-			export QT_WAYLAND_DISABLE_WINDOWDECORATION="1"
-			# Fix for some Java AWT applications (e.g. Android Studio),
-			# use this if they aren't displayed properly:
-			export _JAVA_AWT_WM_NONREPARENTING=1
-			'';
-	};
-	environment.systemPackages = with pkgs; [ wl-clipboard ];
-	environment.systemPackages = with pkgs; [
-		gtk-engine-murrine
-		gtk_engines
-		gsettings-desktop-schemas
-		lxappearance
-	];
-	programs.qt5ct.enable = true;
-	systemd.user.services.swayidle = {
-		description = "Idle Manager for Wayland";
-		documentation = [ "man:swayidle(1)" ];
-		wantedBy = [ "sway-session.target" ];
-		partOf = [ "graphical-session.target" ];
-		path = [ pkgs.bash ];
-		serviceConfig = {
-			ExecStart = '' ${pkgs.swayidle}/bin/swayidle -w -d \
-				    timeout 300 '${pkgs.sway}/bin/swaymsg "output * dpms off"' \
-				    resume '${pkgs.sway}/bin/swaymsg "output * dpms on"'
-				    '';
+	# enable brightness control
+	programs.light.enable = true;
+	
+	home-manager.users.sisyphus = { pkgs, ... }: {
+		# setup sway config
+		wayland.windowManager.sway = {
+			enable = true;
+			config = {
+				terminal = "alacritty";
+				modifier = "Mod4";
+				menu = "bemenu-run";
+				input = {
+					"type:keyboard" = {
+						xkb_layout = "us";
+						xkb_options = "caps:swapescape";
+						xkb_numlock = "enabled";
+					};
+					"type:touchpad" = {
+						accel_profile = "adaptive";
+						click_method = "clickfinger";
+						dwt = "enabled";
+						tap = "enabled";
+						drag = "enabled";
+					};
+					"type:pointer" = {
+						accel_profile = "flat";
+						pointer_accel = "0.0";
+					};
+				};
+				output = {
+					eDP-1 = {
+						pos = "0 0";
+					};
+					HDMI-A-1 = {
+						pos = "1440 0";
+					};
+				};
+			};
 		};
-	};
-	# Here we but a shell script into path, which lets us start sway.service (after importing the environment of the login shell).
-	environment.systemPackages = with pkgs; [
-		(
-		 pkgs.writeTextFile {
-		 name = "startsway";
-		 destination = "/bin/startsway";
-		 executable = true;
-		 text = ''
-		 #! ${pkgs.bash}/bin/bash
 
-		 # first import environment variables from the login manager
-		 systemctl --user import-environment
-		 # then start the service
-		 exec systemctl --user start sway.service
-		 '';
-		 }
-		)
-	];
-	systemd.user.targets.sway-session = {
-		description = "Sway compositor session";
-		documentation = [ "man:systemd.special(7)" ];
-		bindsTo = [ "graphical-session.target" ];
-		wants = [ "graphical-session-pre.target" ];
-		after = [ "graphical-session-pre.target" ];
-	};
-	systemd.user.services.sway = {
-		description = "Sway - Wayland window manager";
-		documentation = [ "man:sway(5)" ];
-		bindsTo = [ "graphical-session.target" ];
-		wants = [ "graphical-session-pre.target" ];
-		after = [ "graphical-session-pre.target" ];
-		# We explicitly unset PATH here, as we want it to be set by
-		# systemctl --user import-environment in startsway
-		environment.PATH = lib.mkForce null;
-		serviceConfig = {
-			Type = "simple";
-			ExecStart = ''
-				${pkgs.dbus}/bin/dbus-run-session ${pkgs.sway}/bin/sway --debug
-				'';
-			Restart = "on-failure";
-			RestartSec = 1;
-			TimeoutStopSec = 10;
+		# setup zathura
+		programs.zathura.enable = true;
+		programs.zathura.options = {
+			default-bg = "#000000"; 
+			default-fg = "#FFFFFF";
 		};
-	};
-	services.redshift = {
-		enable = true;
-		# Redshift with wayland support isn't present in nixos-19.09 atm. You have to cherry-pick the commit from https://github.com/NixOS/nixpkgs/pull/68285 to do that.
-		package = pkgs.redshift-wlr;
-	};
 
-	programs.waybar.enable = true;
+		# setup fish
+		programs.fish.enable = true;
 
-	systemd.user.services.kanshi = {
-		description = "Kanshi output autoconfig ";
-		wantedBy = [ "graphical-session.target" ];
-		partOf = [ "graphical-session.target" ];
-		serviceConfig = {
-		# kanshi doesn't have an option to specifiy config file yet, so it looks
-		# at .config/kanshi/config
-			ExecStart = ''
-				${pkgs.kanshi}/bin/kanshi
-				'';
-			RestartSec = 5;
-			Restart = "always";
+		# setup waybar
+		programs.waybar.enable = true;
+
+		# setup tmux
+		programs.tmux.enable = true;
+		programs.tmux.extraConfig = ''
+			unbind C-b
+			set-option -g prefix C-a
+			bind-key C-a send-prefix
+
+			bind | split-window -h
+			bind - split-window -v
+			unbind '\"'
+			unbind %
+
+			bind -n M-h select-pane -L
+			bind -n M-l select-pane -R
+			bind -n M-k select-pane -U
+			bind -n M-j select-pane -D
+
+			set -g mouse on
+
+			set-option -g allow-rename on
+
+			bind-key r command-prompt -I \"#W\" "rename-window '%%'"
+
+			set -g default-terminal \"screen-256color\"'';
+
+		# setup chromium
+		programs.chromium = {
+			enable = true;
+			package = pkgs.ungoogled-chromium;
+			extensions = [
+				"cjpalhdlnbpafiamejdnhcphjbkeiagm" # ublock origin
+				"gcbommkclmclpchllfjekcdonpmejbdp" # https everywhere
+				"nngceckbapebfimnlniiiahkandclblb" # bitwarden
+			];
+		#extraOpts = {
+		#	"BrowserSignin" = 0;
+		#	"SyncDisabled" = true;
+		#	"PasswordManagerEnabled" = false;
+		#	"AutofillAddressEnabled" = false;
+		#	"AutofillCreditCardEnabled" = false;
+		#	"BuiltInDnsClientEnabled" = false;
+		#	"MetricsReportingEnabled" = false;
+		#	"SearchSuggestEnabled" = false;
+		#	"AlternateErrorPagesEnabled" = false;
+		#	"SpellcheckEnabled" = true;
+		#	"SpellcheckLanguage" = [ "en-US" ];
+		#	"CloudPrintSubmitEnabled" = false;
+		#};
 		};
-	};
 
-
-	# setup firefox
-	program.firefox = {
-		enable = true;
-		extensions = with pkgs.nur.repos.rycee.firefox-addons; [
-			privacy-badger
-			CookieAutoDelete
-			CanvasBlocker
-			uBlock
-			https-everywhere
-			cookiemaster
-			vimium-c
-			darkreader
-			treestyletab
-		];
-		package = pkgs.wrapFirefox pkgs.firefox-unwrapped {
-			forceWayland = true;
-			profiles.sisyphus = {
+		# setup firefox
+		programs.firefox = {
+			enable = true;
+			extensions = with pkgs.nur.repos.rycee.firefox-addons; [
+				privacy-badger
+				bitwarden
+				clearurls
+				cookie-autodelete
+				i-dont-care-about-cookies
+				h264ify
+				temporary-containers
+				canvasblocker
+				decentraleyes
+				ublock-origin
+				videospeed
+				https-everywhere
+				vimium
+				darkreader
+			];
+			package = pkgs.wrapFirefox pkgs.firefox-unwrapped {
+				forceWayland = true;
+			};
+			profiles."sisyphus" = {
 				id = 0;
 				isDefault = true;
 				name = "sisyphus";
@@ -275,89 +262,56 @@
 		};
 	};
 	services.pipewire.enable = true;
-	environment.sessionVariables = {
-		MOZ_ENABLE_WAYLAND = "1";
-		XDG_CURRENT_DESKTOP = "sway"; 
-	};
-	home.sessionVariables = {
-		MOZ_ENABLE_WAYLAND = 1;
-		XDG_CURRENT_DESKTOP = "sway"; 
-	};
-	xdg = {
-		portal = {
-			enable = true;
-			extraPortals = with pkgs; [
-				xdg-desktop-portal-wlr
-				xdg-desktop-portal-gtk
-			];
-			gtkUsePortal = true;
-		};
-	};
+	# general configurations
+	services.printing.enable = true;
 
-	programs.chromium = {
+	# sway
+	programs.sway = {
 		enable = true;
-		extensions = [
-			"cjpalhdlnbpafiamejdnhcphjbkeiagm" # uBlock Origin
-			"gcbommkclmclpchllfjekcdonpmejbdp" # HTTPS Everywhere
+		wrapperFeatures.gtk = true;
+		extraPackages = with pkgs; [
+			swaylock
+			swayidle
+			swaylock
+			wl-clipboard
+			mako
+			alacritty
+			bemenu		
 		];
-		extraOpts = {
-			"BrowserSignin" = 0;
-			"SyncDisabled" = true;
-			"PasswordManagerEnabled" = false;
-			"AutofillAddressEnabled" = false;
-			"AutofillCreditCardEnabled" = false;
-			"BuiltInDnsClientEnabled" = ffalse;
-			"MetricsReportingEnabled" = false;
-			"SearchSuggestEnabled" = false;
-			"AlternateErrorPagesEnabled" = false;
-			"SpellcheckEnabled" = true;
-			"SpellcheckLanguage" = [ "en-US" ]
-			"CloudPrintSubmitEnabled" = false;
-		};
 	};
 
-	# setup zathura
-	programs.zathura.enable = true;
-	programs.zathura.options = {
-		default-bg = "#000000"; 
-		default-fg = "#FFFFFF";
-	};
+	# GDM & GUH-NOME as an alternative
+	services.xserver.enable = true;
+	services.xserver.displayManager.gdm.enable = true;
+	services.xserver.displayManager.gdm.wayland = true;
+	services.xserver.desktopManager.gnome3.enable = true;
+	services.gnome3.gnome-keyring.enable = true;
 
-	# setup fish
-	programs.fish.enable = true;
+	# software packages
+	environment.systemPackages = with pkgs; [
+			#chromium
+			#firefox
+			libreoffice
+			neofetch
+			flameshot
+			zathura
+			fish
+			networkmanager
+			calibre
+			bitwarden
+			bitwarden-cli
+			sway
 
-	# setup tmux
-	programs.tmux.enable = true;
-	programs.tmux.extraConfig = "
-		unbind C-b
-		set-option -g prefix C-a
-		bind-key C-a send-prefix
+			# theming
+			gtk-engine-murrine
+			gtk_engines
+			gsettings-desktop-schemas
+			lxappearance
 
-		bind | split-window -h
-		bind - split-window -v
-		unbind '\"'
-		unbind %
-
-		bind -n M-h select-pane -L
-		bind -n M-l select-pane -R
-		bind -n M-k select-pane -U
-		bind -n M-j select-pane -D
-
-		set -g mouse on
-
-		set-option -g allow-rename on
-
-		bind-key r command-prompt -I \"#W\" "rename-window '%%'"
-
-		set -g default-terminal \"screen-256color\"";
-
-	enviornment.systemPackges = with pkgs; [
-		chromium
-		firefox
-		libreoffice
-		neofetch
-		flameshot
-		zathura
-		fish
+			# guh-nome
+			gnomeExtensions.appindicator
+			gnome3.gnome-tweak-tool
+			mousetweaks
 	];
 }
+

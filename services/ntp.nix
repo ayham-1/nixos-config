@@ -1,8 +1,6 @@
 { config, lib, ... }:
 
 {
-	services.ntp.enable = true;
-
 	services.timesyncd = {
 		enable = lib.mkDefault true;
 		servers = [

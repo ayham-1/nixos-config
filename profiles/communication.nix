@@ -9,55 +9,59 @@
 		# messengers
 		discord
 		# gnupg
-		gpa
+		#gpa
 		# rss
-		newsboat
+		#newsboat
 		# video
 		mpv
 		youtube-dl
+		# music
+		cmus
 	];
 
-	# setup newsboat
-	programs.newsboat = {
-		enable = true;
-		autoReload = yes;
-		reloadThreads = 4;
-		extraConfig = $'''
-			bind-key j down feedlist
-			bind-key k up feedlist
-			bind-key j next articlelist
-			bind-key k prev articlelist
-			bind-key J next-feed articlelist
-			bind-key K prev-feed articlelist
-			bind-key j down article
-			bind-key k up article
+	home-manager.users.sisyphus = { pkgs, ... }: {
+		# setup newsboat
+		programs.newsboat = {
+			enable = true;
+			autoReload = true;
+			reloadThreads = 4;
+			extraConfig = ''
+				bind-key j down feedlist
+				bind-key k up feedlist
+				bind-key j next articlelist
+				bind-key k prev articlelist
+				bind-key J next-feed articlelist
+				bind-key K prev-feed articlelist
+				bind-key j down article
+				bind-key k up article
 
-			macro m set browser "mpv --ytdl %u --profile=360p > /dev/null &"; open-in-browser ; set browser "lynx -nocolor"
-			macro a set browser "echo %u | xclip -sel clip"; open-in-browser ; set browser "lynx -nocolor"
-			macro v set browser "curl %u | feh - &"; open-in-browser ; set browser "lynx -nocolor"
+				macro m set browser "mpv --ytdl %u --profile=360p > /dev/null &"; open-in-browser ; set browser "lynx -nocolor"
+				macro a set browser "echo %u | xclip -sel clip"; open-in-browser ; set browser "lynx -nocolor"
+				macro v set browser "curl %u | feh - &"; open-in-browser ; set browser "lynx -nocolor"
 
-			delete-played-files no
-			download-path "~/dox/pod/%h/%n"
-			max-downloads 4
-			player "nvlc"
-			color listfocus           white   black   bold
-			color listfocus_unread    white   black   bold
-			color info                white   black   bold
+				delete-played-files no
+				download-path "~/dox/pod/%h/%n"
+				max-downloads 4
+				player "nvlc"
+				color listfocus           white   black   bold
+				color listfocus_unread    white   black   bold
+				color info                white   black   bold
 
-			unbind-key C feedlist
-			confirm-exit no
-			cleanup-on-quit no
-			$''';
-		urls = [
+				unbind-key C feedlist
+				confirm-exit no
+				cleanup-on-quit no
+				'';
+			urls = [
 			{ tags = [ "XKCD" ]; url = "https://xkcd.com/atom.xml"; }
 			{ tags = [ "Linux Journal" ]; url =
-			"https://www.linuxjournal.com/news.rss"; }
+				"https://www.linuxjournal.com/news.rss"; }
 			{ tags = [ "ItsFOSS" ]; url = "https://itsfoss.com/feed"; }
 			{ tags = [ "Opensource News" ]; url =
-			"https://opensource.org/news.xml"; }
+				"https://opensource.org/news.xml"; }
 			{ tags = [ "WeLiveSecurity" ]; url =
-			"https://www.welivesecurity.com/feed"; }
+				"https://www.welivesecurity.com/feed"; }
 			{ tags = [ "ItsFOSS" ]; url = "https://itsfoss.com/feed"; }
-		];
+			];
+		};
 	};
 }

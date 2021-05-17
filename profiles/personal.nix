@@ -1,11 +1,11 @@
-{ config, pkgs, libs, ... }:
+{ config, pkgs, ... }:
 
 {
-	imports = [ "../users/sisyphus/personal.nix" ];
+	imports = [ ../users/sisyphus/personal.nix ];
 
 	environment.systemPackages = with pkgs; [
 		virtmanager
-	]
+	];
 
 	virtualisation.docker.enable = true;
 

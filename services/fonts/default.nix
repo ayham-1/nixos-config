@@ -21,7 +21,7 @@
 				serif = [ "Linux Libertine" ];
 				sansSerif = [ "Open Sans" ];
 				emoji = [ "Twitter Color Emoji" ];
-			}
-		}
-	}
+			};
+		};
+	};
 }

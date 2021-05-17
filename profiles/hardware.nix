@@ -5,7 +5,10 @@
 		lshw
 		usbutils
 		pciutils
-		pactl
 	];
-	programs.light.enable = true;
+
+	# network drivers
+	#boot.initrd.kernelModules = [ "iwlwifi" ]; # for initrd wifi
+	hardware.enableRedistributableFirmware = true;
+	hardware.enableAllFirmware = true;
 }
